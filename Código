@@ -1,0 +1,195 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+import seaborn as sns
+from sklearn import metrics
+from sklearn.svm import LinearSVC
+
+
+# ITEM A
+data = pd.read_csv(
+    "/Users/Rolando Mora/PycharmProjects/Entregable01/.venv/data/dataset1.csv")
+data.reset_index(inplace=True)
+data.columns = ['X1', 'X2', 'y']
+data.head()
+
+# X1 y X2 son nuestras variables de entrada (features)
+# y es nuestra variable objetivo (target)
+
+df = data.copy()
+df.head()
+
+# Desacoplar variables de entrada
+X1 = df.iloc[:, 0]
+X2 = df.iloc[:, 1]
+# Acoplar variables de entrada
+X = np.column_stack((X1, X2))
+# Variable objetivo
+y = df.iloc[:, 2]
+
+# Diagrama de dispersión
+plt.scatter(X1[y == 1], X2[y == 1], c='r', marker='+', label='1')
+plt.scatter(X1[y == -1], X2[y == -1], c='g', marker='o', label='-1', s=10)
+plt.xlabel('x_1')
+plt.ylabel('x_2')
+plt.title("Diagrama de dispersión del dataset")
+plt.legend(bbox_to_anchor=(1.15, 1.15), loc='upper right', fancybox=True, framealpha=1, fontsize=10)
+plt.savefig('FiguraA01.png')
+
+plt.show()
+
+LR0 = LogisticRegression()
+entrenamiento = {}
+resultados = {}
+
+# Elegir % de datos a entrenar
+val_test = [0.2, 0.3, 0.4]
+for Pr in val_test:
+    x_train0, x_test0, y_train0, y_test0 = train_test_split(X, y, test_size=Pr, random_state=4)
+    print(f'Set de Entrenamiento igual a {(1 - Pr) * 100}%: ', x_train0.shape, y_train0.shape)
+    print(f'Set de Prueba igual a {Pr * 100}%: ', x_test0.shape, y_test0.shape)
+    LR0.fit(x_train0, y_train0)
+
+    entre_version = f"Entrenamiento con {Pr * 100}% de datos de prueba"
+    entrenamiento[entre_version] = entrenamiento
+    resultados[entre_version] = (
+        f"Los coeficientes son: {LR0.coef_[0]}", f"La intercepción es: {LR0.intercept_}",
+        LR0.predict(x_train0), f"El puntaje es {LR0.score(x_train0, y_train0)}")
+
+    print("")
+    print(f"Métricas de la regresión logística del modelo entrenado con {Pr * 100}% de datos de prueba:")
+    print('Los coeficientes del set son: ', LR0.coef_[0])
+    print('La intercepción del set es: ', LR0.intercept_)
+    predict0 = LR0.predict(x_train0)
+    score0 = LR0.score(x_train0, y_train0)
+    print('El puntaje del set es: ', score0)
+    print("")
+
+    # Importancia de las variables de entrada
+    feature_importance0 = LR0.coef_[0]
+    for i, val in enumerate(feature_importance0):
+        print('Variable de entrada: %0d, Puntaje: %.5f' % (i, val))
+    plt.bar([x for x in range(len(feature_importance0))], feature_importance0)
+    plt.xlabel('Variables de entrada')
+    plt.ylabel('Puntajes')
+    plt.title(f"Importancia de las variables con {Pr * 100}% de datos de prueba:")
+    plt.show()
+
+    cm0 = metrics.confusion_matrix(y_train0, predict0)
+    print(cm0)
+    cr0 = metrics.classification_report(y_train0, predict0)
+    print(cr0)
+
+    # Gráfica de precisión
+    plt.figure(figsize=(7, 7))
+    sns.heatmap(cm0, annot=True, fmt=".0f", linewidths=.5, square=True, cmap='Greens');
+    plt.ylabel('Valores actuales')
+    plt.xlabel('Valores predecidos')
+
+    all_sample_title = "Precisión: {0}".format(score0)
+    plt.title(all_sample_title, size=15)
+
+    plt.show()
+
+# Se trabajará de aquí en adelante con 80% datos de entrenamiento, 20% datos de prueba
+x_train1, x_test1, y_train1, y_test1 = train_test_split(X, y, test_size=0.2, random_state=4)
+LR1 = LogisticRegression()
+LR1.fit(x_train1, y_train1)
+predict1 = LR1.predict(x_train1)
+score1 = LR1.score(x_train1, y_train1)
+
+# Frontera de decisión
+plt.figure(figsize=(8, 6))
+plt.scatter(X[y == 1][:, 0], X[y == 1][:, 1], color='r', marker='+', label='Respuesta 1')
+plt.scatter(X[y == -1][:, 0], X[y == -1][:, 1], color='g', marker='o', label='Respuesta -1')
+plt.xlabel('x_1')
+plt.ylabel('x_2')
+plt.title('Frontera de decisión del modelo entrenado')
+
+# Obtener las predicciones
+y_pred = LR1.predict(X)
+
+# Graficar las predicciones
+plt.scatter(X[y_pred == 1][:, 0], X[y_pred == 1][:, 1], marker='x', color='blue', label='Predicción Respuesta 1')
+plt.scatter(X[y_pred == -1][:, 0], X[y_pred == -1][:, 1], marker='x', color='magenta', label='Predicción Respuesta -1')
+
+# Obtener los coeficientes del modelo
+coef = LR1.coef_[0]
+intercept = LR1.intercept_[0]
+
+# Crear la línea de la frontera de decisión
+x_values = np.linspace(X[:, 0].min(), X[:, 0].max(), 500)
+frontera = -(coef[0] * x_values + intercept) / coef[1]
+
+# Graficar la frontera de decisión
+plt.plot(x_values, frontera, color='brown', label='Frontera de decisión')
+plt.legend(bbox_to_anchor=(1, 1), loc='upper right', fancybox=True, framealpha=1, fontsize=6)
+plt.savefig('FiguraA03.png')
+plt.show()
+
+# ITEM B
+# Entrenar modelos de clasificación con cada conjunto usando LinearSVC
+models = {}
+results = {}
+
+C_values = [0.001, 0.1, 1, 10, 100, 1000]
+for C in C_values:
+    f_model = LinearSVC(max_iter=10000, C=C)
+
+    f_model.fit(x_train1, y_train1)
+    f_predictions = f_model.predict(x_train1)
+    f_score = f_model.score(x_train1, y_train1)
+
+    model_name = f"Modelo Linear SVC C={C}"
+    models[model_name] = models
+    results[model_name] = (
+        f_score, metrics.confusion_matrix(y_train1, f_predictions),
+        metrics.classification_report(y_train1, f_predictions))
+print("")
+print("Entrenamiento usando LinealSVC")
+# Mostrar resultados
+for name, (score, cm, cr) in results.items():
+    print(f"\n{name} - Acurracy: {score}")
+    print("Matrix de Confusión: ")
+    print(cm)
+    print("Reporte de clasificación: ")
+    print(cr)
+
+# Se trabajará de aquí en adelante con C = 0.01
+svc_model = LinearSVC(C=0.1, max_iter=10000)
+svc_model.fit(x_train1, y_train1)
+y_pred_svc = svc_model.predict(X)
+
+# Gráfico los datos de entrenamiento y las predicciones
+plt.figure(figsize=(12, 8))
+
+# Datos de entrenamiento reales
+plt.subplot(1, 2, 1)
+plt.scatter(X[y == 1][:, 0], X[y == 1][:, 1], color='r', marker='+', label='Respuesta 1')
+plt.scatter(X[y == -1][:, 0], X[y == -1][:, 1], color='g', marker='o', label='Respuesta -1')
+
+# Graficar predicciones del clasificador de regresión logística
+plt.scatter(X[y_pred == 1][:, 0], X[y_pred == 1][:, 1], marker='x', color='blue', label='Predicción RegLog Respuesta 1', alpha=0.4)
+plt.scatter(X[y_pred == -1][:, 0], X[y_pred == -1][:, 1], marker='x', color='magenta', label='Predicción RegLog Respuesta -1', alpha=0.4)
+plt.plot(x_values, frontera, color='brown', label='Frontera de decisión RegLog')
+
+# Graficar predicciones del clasificador LinearSVC
+#plt.subplot(1, 2, 2)
+plt.scatter(X[y_pred_svc==1][:, 0], X[y_pred_svc==1][:, 1], marker='x', color='cyan', label='Predicción SVC Respuesta 1')
+plt.scatter(X[y_pred_svc==-1][:, 0], X[y_pred_svc==-1][:, 1], marker='x', color='yellow', label='Predicción SVC Rspuesta -1')
+
+# Frontera de decisión para SVC
+coef_svc = svc_model.coef_[0]
+intercept_svc = svc_model.intercept_[0]
+frontera_svc = -(coef_svc[0] * x_values + intercept_svc) / coef_svc[1]
+plt.plot(x_values, frontera_svc, color='orange', label='Frontera de decisión SVC')
+
+plt.xlabel('x_1')
+plt.ylabel('x_2')
+plt.title('Frontera de decisión de los modelos entrenados')
+plt.legend(bbox_to_anchor=(1, 1), loc='upper left', fancybox=True, framealpha=1, fontsize=6)
+
+plt.savefig('FiguraA04.png')
+plt.show()
