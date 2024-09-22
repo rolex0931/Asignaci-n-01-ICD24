@@ -176,9 +176,8 @@ plt.scatter(X[y_pred == -1][:, 0], X[y_pred == -1][:, 1], marker='x', color='mag
 plt.plot(x_values, frontera, color='brown', label='Frontera de decisión RegLog')
 
 # Graficar predicciones del clasificador LinearSVC
-#plt.subplot(1, 2, 2)
-plt.scatter(X[y_pred_svc==1][:, 0], X[y_pred_svc==1][:, 1], marker='x', color='cyan', label='Predicción SVC Respuesta 1')
-plt.scatter(X[y_pred_svc==-1][:, 0], X[y_pred_svc==-1][:, 1], marker='x', color='yellow', label='Predicción SVC Rspuesta -1')
+plt.scatter(X[y_pred_svc==1][:, 0], X[y_pred_svc==1][:, 1], marker='3', color='yellow', label='Predicción SVC Respuesta 1')
+plt.scatter(X[y_pred_svc==-1][:, 0], X[y_pred_svc==-1][:, 1], marker='3', color='cyan', label='Predicción SVC Rspuesta -1')
 
 # Frontera de decisión para SVC
 coef_svc = svc_model.coef_[0]
